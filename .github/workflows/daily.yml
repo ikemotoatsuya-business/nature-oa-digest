@@ -41,6 +41,8 @@ jobs:
           MAX_ITEMS_PER_RUN: ${{ vars.MAX_ITEMS_PER_RUN || '40' }}
           REQUEST_DELAY_SEC: ${{ vars.REQUEST_DELAY_SEC || '5' }}
           OA_ONLY: ${{ vars.OA_ONLY || 'true' }}
+          FETCH_FULLTEXT: ${{ vars.FETCH_FULLTEXT || 'true' }}
+          MAX_FULLTEXT_CHARS: ${{ vars.MAX_FULLTEXT_CHARS || '20000' }}
           SEED_ONLY: ${{ inputs.seed_only || 'false' }}
         run: python src/main.py
 
