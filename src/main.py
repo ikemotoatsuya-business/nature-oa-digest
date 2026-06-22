@@ -46,6 +46,16 @@ MAX_ITEMS_PER_RUN = int(os.environ.get("MAX_ITEMS_PER_RUN", "40"))
 REQUEST_DELAY_SEC = float(os.environ.get("REQUEST_DELAY_SEC", "5"))
 # OA以外もダイジェストに含めるか（既定: OAのみ）
 OA_ONLY = os.environ.get("OA_ONLY", "true").lower() != "false"
+# 本文(OA全文)を取得して要約に使うか（既定: 有効。失敗時は要旨にフォールバック）
+FETCH_FULLTEXT = os.environ.get("FETCH_FULLTEXT", "true").lower() != "false"
+# 本文をLLMに渡す際の最大文字数（無料枠保護のための上限。超過分は切り捨て）
+MAX_FULLTEXT_CHARS = int(os.environ.get("MAX_FULLTEXT_CHARS", "20000"))
+# 全文取得時のUser-Agent（礼儀として連絡先を入れておく）
+USER_AGENT = os.environ.get(
+    "USER_AGENT", "nature-oa-digest/1.0 (mailto:{})".format(
+        os.environ.get("CONTACT_EMAIL", "anonymous@example.com")
+    )
+)
 # 初回シードモード: 現時点の全記事を「既読」にするだけ（要約せず終了）。
 # 初回実行で大量処理して無料枠を使い切らないための仕組み。
 SEED_ONLY = os.environ.get("SEED_ONLY", "false").lower() == "true"
@@ -180,6 +190,56 @@ def check_open_access(doi: str) -> tuple[bool, str | None]:
 
 
 # ----------------------------------------------------------------------
+# 本文(OA全文)の取得
+# ----------------------------------------------------------------------
+def _extract_pdf_text(content: bytes) -> str:
+    import io
+    from pypdf import PdfReader
+
+    reader = PdfReader(io.BytesIO(content))
+    texts = []
+    for page in reader.pages:
+        try:
+            texts.append(page.extract_text() or "")
+        except Exception:
+            continue
+    return "\n".join(texts)
+
+
+def _extract_html_text(html: str) -> str:
+    import trafilatura
+
+    return trafilatura.extract(html) or ""
+
+
+def fetch_fulltext(url: str) -> str | None:
+    """OAのPDF/HTMLから本文テキストを取得。失敗時は None。"""
+    if not url:
+        return None
+    try:
+        r = requests.get(
+            url, headers={"User-Agent": USER_AGENT}, timeout=40, allow_redirects=True
+        )
+        if r.status_code != 200:
+            log(f"  本文取得 {r.status_code}: {url}")
+            return None
+        ctype = (r.headers.get("Content-Type") or "").lower()
+        if "pdf" in ctype or r.content[:5] == b"%PDF-":
+            text = _extract_pdf_text(r.content)
+        else:
+            text = _extract_html_text(r.text)
+        text = re.sub(r"\s+\n", "\n", text or "").strip()
+        if len(text) < 200:  # 抽出失敗とみなす閾値
+            return None
+        if len(text) > MAX_FULLTEXT_CHARS:
+            text = text[:MAX_FULLTEXT_CHARS] + "\n…（以下、文字数上限により省略）"
+        return text
+    except Exception as exc:  # ネットワーク/抽出いずれの失敗も握る
+        log(f"  本文取得エラー {url}: {exc}")
+        return None
+
+
+# ----------------------------------------------------------------------
 # LLM (Gemini)
 # ----------------------------------------------------------------------
 def make_gemini_caller():
@@ -200,44 +260,54 @@ def make_gemini_caller():
 
 def build_section(call, item: dict) -> str:
     """1記事分の Markdown セクションを生成。"""
+    body_source = item.get("body_source", "要旨")
     header = (
         f"### {item['title']}\n\n"
         f"- **誌名**: {item['journal']}\n"
         f"- **著者**: {item['authors'] or '—'}\n"
         f"- **公開**: {item['published'] or '—'}\n"
         f"- **DOI**: [{item['doi']}](https://doi.org/{item['doi']})\n"
-        f"- **本文(OA)**: {item.get('oa_url') or item['link']}\n\n"
+        f"- **本文(OA)**: {item.get('oa_url') or item['link']}\n"
+        f"- **要約の元**: {body_source}\n\n"
     )
 
-    if call is None or not item["abstract"]:
-        # LLM未使用時は原文要旨のみ
-        body = f"> {item['abstract'] or '(要旨なし)'}\n"
+    # 要約に渡すテキスト: 本文があれば本文、無ければ要旨
+    content = item.get("body") or item["abstract"]
+
+    if call is None or not content:
+        body = f"> {content or '(本文・要旨なし)'}\n"
         return header + body + "\n---\n\n"
 
     try:
         summary = call(
             load_prompt("summarize.txt").format(
-                title=item["title"], journal=item["journal"], abstract=item["abstract"]
+                title=item["title"], journal=item["journal"], body=content
             )
         )
     except Exception as exc:  # 1記事の失敗で全体を止めない
         log(f"  要約生成エラー: {exc}")
         summary = "(要約生成に失敗しました)"
 
-    try:
-        translation = call(
-            load_prompt("translate.txt").format(abstract=item["abstract"])
-        )
-    except Exception as exc:
-        log(f"  翻訳生成エラー: {exc}")
-        translation = "(翻訳生成に失敗しました)"
+    # 翻訳は要旨のみ対象（本文全訳はコストが高いため）
+    translation = ""
+    if item["abstract"]:
+        try:
+            translation = call(
+                load_prompt("translate.txt").format(abstract=item["abstract"])
+            )
+        except Exception as exc:
+            log(f"  翻訳生成エラー: {exc}")
+            translation = "(翻訳生成に失敗しました)"
 
-    body = (
-        f"#### 要約・解釈\n\n{summary}\n\n"
-        f"#### 要旨（日本語訳）\n\n{translation}\n\n"
-        f"<details><summary>原文要旨 (English)</summary>\n\n{item['abstract']}\n\n</details>\n"
-    )
-    return header + body + "\n---\n\n"
+    parts = [header, f"#### 要約・解釈（{body_source}より）\n\n{summary}\n\n"]
+    if translation:
+        parts.append(f"#### 要旨（日本語訳）\n\n{translation}\n\n")
+    if item["abstract"]:
+        parts.append(
+            f"<details><summary>原文要旨 (English)</summary>\n\n{item['abstract']}\n\n</details>\n"
+        )
+    parts.append("\n---\n\n")
+    return "".join(parts)
 
 
 # ----------------------------------------------------------------------
@@ -284,6 +354,20 @@ def main() -> int:
             continue
 
         it["oa_url"] = oa_url
+        # 本文(OA全文)を取得。失敗時は要旨にフォールバック。
+        if FETCH_FULLTEXT and oa_url:
+            full = fetch_fulltext(oa_url)
+            time.sleep(2)  # 取得先サーバーへの配慮
+            if full:
+                it["body"] = full
+                it["body_source"] = "本文"
+            else:
+                it["body"] = it["abstract"]
+                it["body_source"] = "要旨（本文取得失敗）"
+        else:
+            it["body"] = it["abstract"]
+            it["body_source"] = "要旨"
+
         processed.append(it)
         seen.add(it["doi"])
         if call is not None:
