@@ -1,0 +1,25 @@
+# 監視対象のRSSフィード（1行1URL、# で始まる行はコメント）
+# 追加・削除はこのファイルを編集するだけでOK
+https://www.nature.com/natwater.rss
+https://www.nature.com/npjcleanwater.rss
+https://www.nature.com/npjemergcontam.rss
+https://www.nature.com/ngeo.rss
+https://www.nature.com/natrevearthenviron.rss
+https://www.nature.com/commsenv.rss
+https://www.nature.com/npjclimatsci.rss
+https://www.nature.com/nclimate.rss
+https://www.nature.com/npjnathazards.rss
+https://www.nature.com/natcities.rss
+https://www.nature.com/npjurbansustain.rss
+https://www.nature.com/npjsustainmobil.rss
+https://www.nature.com/commseng.rss
+https://www.nature.com/npjsustainagric.rss
+https://www.nature.com/natfood.rss
+https://www.nature.com/natsustain.rss
+https://www.nature.com/commssustain.rss
+https://www.nature.com/natecolevol.rss
+https://www.nature.com/palcomms.rss
+https://www.nature.com/npjenvsocsci.rss
+https://www.nature.com/nathumbehav.rss
+https://www.nature.com/nature.rss
+https://www.nature.com/ncomms.rss
