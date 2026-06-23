@@ -56,7 +56,8 @@ def main() -> int:
 
     # 新着OAが無い日はファイルが作られない。その場合は静かに正常終了。
     if not md_path.exists():
-        print(f"本日のダイジェストはありません（{md_path}）。送信しません。")
+        post(f"🔕 本日（{md_path.stem}）は新着OA論文がありませんでした。")
+        print(f"新着なしを通知しました（{md_path}）。")
         return 0
 
     content = md_path.read_text(encoding="utf-8").strip()
