@@ -8,26 +8,26 @@ https://www.nature.com/npjcleanwater.rss
 https://www.nature.com/commsenv.rss
 
 # --- 以下は段階的に有効化（# を外す）---
-# https://www.nature.com/ncomms.rss
-# https://www.nature.com/commseng.rss
-# https://www.nature.com/commssustain.rss
-# https://www.nature.com/npjemergcontam.rss
-# https://www.nature.com/npjclimatsci.rss
-# https://www.nature.com/npjnathazards.rss
-# https://www.nature.com/npjurbansustain.rss
-# https://www.nature.com/npjsustainmobil.rss
-# https://www.nature.com/npjsustainagric.rss
-# https://www.nature.com/npjenvsocsci.rss
-# https://www.nature.com/palcomms.rss
+https://www.nature.com/ncomms.rss
+https://www.nature.com/commseng.rss
+https://www.nature.com/commssustain.rss
+https://www.nature.com/npjemergcontam.rss
+https://www.nature.com/npjclimatsci.rss
+https://www.nature.com/npjnathazards.rss
+https://www.nature.com/npjurbansustain.rss
+https://www.nature.com/npjsustainmobil.rss
+https://www.nature.com/npjsustainagric.rss
+https://www.nature.com/npjenvsocsci.rss
+https://www.nature.com/palcomms.rss
 
 # --- 以下はハイブリッド誌（OA記事のみ本文取得・有料記事は自動除外）---
-# https://www.nature.com/natwater.rss
-# https://www.nature.com/ngeo.rss
-# https://www.nature.com/natrevearthenviron.rss
-# https://www.nature.com/nclimate.rss
-# https://www.nature.com/natcities.rss
-# https://www.nature.com/natfood.rss
-# https://www.nature.com/natsustain.rss
-# https://www.nature.com/natecolevol.rss
-# https://www.nature.com/nathumbehav.rss
-# https://www.nature.com/nature.rss
+https://www.nature.com/natwater.rss
+https://www.nature.com/ngeo.rss
+https://www.nature.com/natrevearthenviron.rss
+https://www.nature.com/nclimate.rss
+https://www.nature.com/natcities.rss
+https://www.nature.com/natfood.rss
+https://www.nature.com/natsustain.rss
+https://www.nature.com/natecolevol.rss
+https://www.nature.com/nathumbehav.rss
+https://www.nature.com/nature.rss
