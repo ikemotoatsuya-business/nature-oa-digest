@@ -6,8 +6,6 @@
 # --- まず有効（全記事OAの環境・水系2誌）---
 https://www.nature.com/npjcleanwater.rss
 https://www.nature.com/commsenv.rss
-
-# --- 以下は段階的に有効化（# を外す）---
 https://www.nature.com/ncomms.rss
 https://www.nature.com/commseng.rss
 https://www.nature.com/commssustain.rss
@@ -19,8 +17,6 @@ https://www.nature.com/npjsustainmobil.rss
 https://www.nature.com/npjsustainagric.rss
 https://www.nature.com/npjenvsocsci.rss
 https://www.nature.com/palcomms.rss
-
-# --- 以下はハイブリッド誌（OA記事のみ本文取得・有料記事は自動除外）---
 https://www.nature.com/natwater.rss
 https://www.nature.com/ngeo.rss
 https://www.nature.com/natrevearthenviron.rss
