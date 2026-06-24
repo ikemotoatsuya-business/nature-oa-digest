@@ -37,7 +37,7 @@ PROMPT_DIR = ROOT / "prompts"
 # 環境変数（設定）
 # ----------------------------------------------------------------------
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite").strip()
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "").strip()  # Unpaywall 必須
 
 # 1回の実行で処理する最大件数（無料枠を超えないための安全弁）
